@@ -36,7 +36,8 @@
 <header class="sap-header">
     <div class="logo"><img src="{{ organization.logo.url }}" class="logo-image">{{ organization.name }}</div>
     <nav>
-        <span class="navbar-item">ButtonA</span>
+        <a href="{% url 'admin_dashboard' %}"><span class="navbar-item active">Entry/Exit</span></a>
+        <a href="{% url 'add_student' %}"><span class="navbar-item">Add Student</span></a>
         <span class="navbar-item" onclick="confirmLogout()">Logout</span>
     </nav>
 </header>

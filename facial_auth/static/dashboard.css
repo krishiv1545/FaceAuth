@@ -163,6 +163,13 @@ button {
     padding-bottom: 0;
 }
 
+.add-student-form {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    padding: 1.5rem;
+}
+
 .form-column h4 {
     margin-top: 0;
     margin-bottom: 30px;
@@ -288,4 +295,8 @@ button {
     padding: 40px !important;
     color: #999;
     font-style: italic;
+}
+
+#camera {
+    transform: scaleX(-1);
 }
