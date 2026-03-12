@@ -85,3 +85,51 @@ def biometric_capture(request):
         "message": "Biometric captured",
         "embedding": embedding
     })
+
+
+@csrf_exempt
+@login_required
+def add_student_api(request):
+
+    if request.user.role != "ORG-ADMIN":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    username = request.POST.get("username")
+    email = request.POST.get("email")
+    password = request.POST.get("password")
+    embedding_raw = request.POST.get("embedding")
+
+    if not username or not email or not password:
+        return JsonResponse({"error": "Missing required fields"}, status=400)
+
+    if not embedding_raw:
+        return JsonResponse({"error": "Biometric embedding missing"}, status=400)
+
+    try:
+        embedding = json.loads(embedding_raw)
+    except Exception:
+        return JsonResponse({"error": "Invalid embedding format"}, status=400)
+
+    from core_APP.models import User
+
+    # prevent duplicate usernames
+    if User.objects.filter(username=username).exists():
+        return JsonResponse({"error": "Username already exists"}, status=400)
+
+    student = User.objects.create_user(
+        username=username,
+        email=email,
+        password=password,
+        role="STUDENT",
+        organization=request.user.organization,
+        face_encoding=embedding
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": "Student created",
+        "student_id": student.id
+    })

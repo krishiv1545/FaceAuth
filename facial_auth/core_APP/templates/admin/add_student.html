@@ -82,6 +82,7 @@
                     <div class="viewport">
                         <video id="camera" autoplay playsinline></video>
                         <canvas id="snapshot" style="display:none;"></canvas>
+                        <img id="preview" style="display:none;width:100%;height:100%;object-fit:cover;">
                         <div class="scanner-overlay"></div>
                     </div>
 
@@ -93,33 +94,48 @@
         </div>
 
         <div class="controls">
-            <button type="submit" class="btn-primary" id="registerBtn" disabled>Register</button>
+            <button type="submit" class="btn-primary" id="registerBtn">Register</button>
         </div>
         </form>
 
     </section>
 </main>
 
+<div id="toast" class="toast"></div>
+
 <script>
-    const video = document.getElementById("camera");
-    const status = document.getElementById("status");
-    const captureBtn = document.getElementById("captureBtn");
+const video = document.getElementById("camera");
+const status = document.getElementById("status");
+const captureBtn = document.getElementById("captureBtn");
 
-    function startCamera() {
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-            status.textContent = "Live";
-            status.style.background = "#e7f4e9";
-            status.style.color = "#1e6332";
-        })
-        .catch(err => {
-            console.error("Camera access denied", err);
-            status.textContent = "Error";
-        });
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream;
+        status.textContent = "Live";
+        status.style.background = "#e7f4e9";
+        status.style.color = "#1e6332";
+    })
+    .catch(err => {
+        console.error("Camera access denied", err);
+        status.textContent = "Error";
+    });
+}
+
+startCamera()
+
+function stopCamera(){
+    const stream = video.srcObject
+    if(stream){
+        stream.getTracks().forEach(track => track.stop())
     }
+}
 
+function restartCamera(){
+    document.getElementById("preview").style.display = "none"
+    video.style.display = "block"
     startCamera()
+}
 </script>
 
 <script>
@@ -130,15 +146,13 @@ function confirmLogout() {
 
 <script>
 let biometricCaptured = false
+let faceEmbedding = null
 
 async function captureFace(){
 
-    status.textContent = "Capturing..."
-    status.style.background = "#fff4e5"
-    status.style.color = "#7a4b00"
-
     const canvas = document.getElementById("snapshot")
     const ctx = canvas.getContext("2d")
+    const preview = document.getElementById("preview")
 
     canvas.width = video.videoWidth
     canvas.height = video.videoHeight
@@ -147,26 +161,35 @@ async function captureFace(){
 
     const imageData = canvas.toDataURL("image/jpeg")
 
+    status.textContent = "Processing..."
+    status.style.background = "#fff4e5"
+    status.style.color = "#7a4b00"
+
     try {
+
         const response = await fetch("/api/biometric-capture/",{
             method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body: JSON.stringify({
-                image: imageData
-            })
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify({ image: imageData })
         })
 
         const data = await response.json()
 
         if(response.ok){
 
+            faceEmbedding = data.embedding
             biometricCaptured = true
 
-            status.textContent = "Captured"
+            preview.src = imageData
+            preview.style.display = "block"
+            video.style.display = "none"
+
+            stopCamera()
+
+            status.textContent = "Face Captured"
             status.style.background = "#e7f4e9"
             status.style.color = "#1e6332"
+
             captureBtn.textContent = "Capture Again"
 
             document.getElementById("registerBtn").disabled = false
@@ -179,14 +202,82 @@ async function captureFace(){
         status.textContent = "Capture Failed"
         status.style.background = "#ffe6e6"
         status.style.color = "#a40000"
+
+        showToast("Face detection failed. Try again.", "error")
     }
+
 }
+
+captureBtn.addEventListener("click", () => {
+
+    if(biometricCaptured){
+        biometricCaptured = false
+        faceEmbedding = null
+
+        status.textContent = "Standby"
+        status.style.background = "#f0f2f5"
+        status.style.color = "#6a6d70"
+
+        captureBtn.textContent = "Capture"
+
+        restartCamera()
+
+    }else{
+        captureFace()
+    }
+
+})
 
 document.getElementById("addStudentForm").addEventListener("submit", function(e){
 
     if(!biometricCaptured){
         e.preventDefault()
-        alert("Please capture biometric face data before registering.")
+    }
+
+})
+
+function showToast(message, type="success") {
+
+    const toast = document.getElementById("toast")
+
+    toast.textContent = message
+    toast.className = "toast show " + type
+
+    setTimeout(() => {
+        toast.className = "toast"
+    }, 3000)
+}
+</script>
+
+<script>
+document.getElementById("addStudentForm").addEventListener("submit", async function(e){
+
+    e.preventDefault()
+
+    if(!faceEmbedding){
+        showToast("Please capture biometric face data first.", "error")
+        return
+    }
+
+    const formData = new FormData(this)
+    formData.append("embedding", JSON.stringify(faceEmbedding))
+
+    const response = await fetch("/api/add-student/",{
+        method:"POST",
+        body: formData
+    })
+
+    const data = await response.json()
+
+    if(response.ok){
+        showToast("Student registered successfully", "success")
+
+        setTimeout(()=>{
+            location.reload()
+        }, 1200)
+
+    }else{
+        showToast(data.error || "Registration failed", "error")
     }
 
 })
