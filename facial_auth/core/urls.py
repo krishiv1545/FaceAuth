@@ -21,5 +21,10 @@ from django.conf.urls import include
 
 urlpatterns = [
     path("admin-site/", admin.site.urls),
-    path("admin/", include("core_APP.modules.admin_dashboard.urls")),
+    path("", include("core_APP.modules.home.urls")),
+    # Dashboards
+    path("", include("core_APP.modules.admin_dashboard.urls")),
+    path("", include("core_APP.modules.superadmin_dashboard.urls")),
+    # Auth
+    path("", include("core_APP.modules.auth.urls")),
 ]

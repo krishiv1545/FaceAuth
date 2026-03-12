@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | FaceAuth</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'auth.css' %}" />
+</head>
+<body class="login-page">
+
+<div class="login-card">
+    <div class="login-header">
+        <div class="logo">Face<span>Auth</span></div>
+        <p>Sign in to your account</p>
+    </div>
+
+    <div class="login-form">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" placeholder="Enter username" autocomplete="username">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <button class="btn-primary full-width" onclick="login()" id="loginBtn">Sign In</button>
+    </div>
+
+    <div id="error-message" class="error-box" style="display: none;"></div>
+</div>
+
+<script>
+async function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
+    const errorBox = document.getElementById("error-message");
+    const loginBtn = document.getElementById("loginBtn");
+
+    // Clear previous errors
+    errorBox.style.display = "none";
+    
+    if (!username || !password) {
+        showError("Please enter both credentials.");
+        return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Authenticating...";
+
+    try {
+        const response = await fetch("/api/login/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            const routes = {
+                "SUPERADMIN": "/superadmin-dashboard/",
+                "ORG-ADMIN": "/admin-dashboard/",
+                "STUDENT": "/student-dashboard/"
+            };
+
+            if (routes[data.role]) {
+                window.location.href = routes[data.role];
+            } else {
+                showError("Unknown user role assigned.");
+            }
+        } else {
+            showError(data.error || "Login failed.");
+        }
+    } catch (err) {
+        showError("Network error. Please try again later.");
+    } finally {
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Sign In";
+    }
+}
+
+function showError(msg) {
+    const errorBox = document.getElementById("error-message");
+    errorBox.textContent = msg;
+    errorBox.style.display = "block";
+}
+</script>
+
+</body>
+</html>
