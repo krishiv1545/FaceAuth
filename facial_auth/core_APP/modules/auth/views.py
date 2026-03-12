@@ -10,7 +10,7 @@ from django.shortcuts import render
 def login_api(request):
 
     if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=400)
+        return JsonResponse({"error": "POST required"}, status=400)        
 
     data = json.loads(request.body)
 
@@ -39,4 +39,10 @@ def logout_api(request):
     
 
 def login_page(request):
+    if request.user.is_authenticated:
+        if request.user.role == "SUPERADMIN":
+            return redirect('superadmin_dashboard')
+        elif request.user.role == 'ORG-ADMIN':
+            return redirect('admin_dashboard')
+        # elif request.user.role == 'STUDENT':
     return render(request, "auth/login.html")

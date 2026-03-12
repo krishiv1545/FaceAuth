@@ -81,11 +81,12 @@
                     
                     <div class="viewport">
                         <video id="camera" autoplay playsinline></video>
+                        <canvas id="snapshot" style="display:none;"></canvas>
                         <div class="scanner-overlay"></div>
                     </div>
 
                     <div class="controls">
-                        <button type="button" class="btn-secondary" onclick="captureFace()">Capture</button>
+                        <button type="button" class="btn-secondary" onclick="captureFace()" id="captureBtn">Capture</button>
                     </div>
                 </section>
             </div>
@@ -102,6 +103,7 @@
 <script>
     const video = document.getElementById("camera");
     const status = document.getElementById("status");
+    const captureBtn = document.getElementById("captureBtn");
 
     function startCamera() {
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -130,14 +132,30 @@ function confirmLogout() {
 let biometricCaptured = false
 
 async function captureFace(){
+
     status.textContent = "Capturing..."
     status.style.background = "#fff4e5"
     status.style.color = "#7a4b00"
 
-    try {
+    const canvas = document.getElementById("snapshot")
+    const ctx = canvas.getContext("2d")
 
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    const imageData = canvas.toDataURL("image/jpeg")
+
+    try {
         const response = await fetch("/api/biometric-capture/",{
-            method:"POST"
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                image: imageData
+            })
         })
 
         const data = await response.json()
@@ -149,6 +167,7 @@ async function captureFace(){
             status.textContent = "Captured"
             status.style.background = "#e7f4e9"
             status.style.color = "#1e6332"
+            captureBtn.textContent = "Capture Again"
 
             document.getElementById("registerBtn").disabled = false
 
@@ -157,13 +176,10 @@ async function captureFace(){
         }
 
     }catch(err){
-        console.log(err)
         status.textContent = "Capture Failed"
         status.style.background = "#ffe6e6"
         status.style.color = "#a40000"
-
     }
-
 }
 
 document.getElementById("addStudentForm").addEventListener("submit", function(e){

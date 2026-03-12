@@ -2,6 +2,13 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+# Dependencies
+import base64
+import json
+import numpy as np
+import face_recognition_models
+import face_recognition
+import cv2
 
 
 @login_required
@@ -41,10 +48,40 @@ def add_student(request):
 
 @csrf_exempt
 def biometric_capture(request):
+
     if request.user.role != "ORG-ADMIN":
-        return redirect("admin_dashboard")
-    
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    data = json.loads(request.body)
+
+    image_data = data.get("image")
+
+    if not image_data:
+        return JsonResponse({"error": "No image provided"}, status=400)
+
+    header, encoded = image_data.split(",", 1)
+
+    image_bytes = base64.b64decode(encoded)
+
+    nparr = np.frombuffer(image_bytes, np.uint8)
+
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    faces = face_recognition.face_encodings(rgb)
+
+    if not faces:
+        return JsonResponse({
+            "error": "No face detected"
+        }, status=400)
+
+    embedding = faces[0].tolist()
+
     return JsonResponse({
         "success": True,
-        "message": "Biometric capture successful",
+        "message": "Biometric captured",
+        "embedding": embedding
     })
