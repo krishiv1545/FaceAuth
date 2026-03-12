@@ -17,14 +17,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.conf.urls import include
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
     path("admin-site/", admin.site.urls),
     path("", include("core_APP.modules.home.urls")),
     # Dashboards
-    path("", include("core_APP.modules.admin_dashboard.urls")),
-    path("", include("core_APP.modules.superadmin_dashboard.urls")),
+    path("", include("core_APP.modules.admin.urls")),
+    path("", include("core_APP.modules.superadmin.urls")),
     # Auth
     path("", include("core_APP.modules.auth.urls")),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

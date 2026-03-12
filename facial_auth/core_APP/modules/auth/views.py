@@ -1,5 +1,6 @@
 import json
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
@@ -27,6 +28,14 @@ def login_api(request):
         "message": "Login successful",
         "role": user.role
     })
+
+
+def logout_api(request):
+    # Clean up session
+    if request.user.is_authenticated:
+        request.session.flush()
+    logout(request)
+    return redirect('login_page') 
     
 
 def login_page(request):

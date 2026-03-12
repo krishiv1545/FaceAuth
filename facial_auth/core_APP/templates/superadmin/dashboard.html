@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | FaceAuth</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'auth.css' %}" />
+</head>
+<body>
+
+<header class="sap-header">
+    <div class="logo">Welcome<span>{{ username }}</span></div>
+    <nav>
+        <a href="{% url 'superadmin_dashboard' %}"><span class="navbar-item active">Add Organization</span></a>
+        <a href="{% url 'organizations_view' %}"><span class="navbar-item">Organizations</span></a>
+        <span class="navbar-item" onclick="confirmLogout()">Logout</span>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <div class="card-header">
+            <h3>Add Organization + ORG-ADMIN</h3>
+        </div>
+        
+        <form id="orgForm" enctype="multipart/form-data">
+        <div class="org-form">
+            <div class="form-column">
+                <h4>Organization Details</h4>
+
+                <div class="form-group">
+                    <label>Organization Name</label>
+                    <input type="text" name="org_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Organization Logo</label>
+                    <input type="file" name="logo">
+                </div>
+
+                <div class="form-group">
+                    <label>Primary Color</label>
+                    <input type="color" name="primary_color" value="#000000" style="padding: 0; border: 0;">
+                </div>
+
+                <div class="form-group">
+                    <label>Secondary Color</label>
+                    <input type="color" name="secondary_color" value="#ffffff" style="padding: 0; border: 0;">
+                </div>
+
+                <div class="form-group">
+                    <label>Tertiary Color</label>
+                    <input type="color" name="tertiary_color" value="#cccccc" style="padding: 0; border: 0;"    >
+                </div>
+            </div>
+
+            <div class="form-column">
+                <h4>Organization Admin</h4>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+            </div>
+        </div>
+        <div class="controls">
+            <button type="submit" class="btn-primary">Register</button>
+        </div>
+        </form>
+
+    </section>
+</main>
+
+<script>
+document.getElementById("orgForm").addEventListener("submit", async function(e){
+
+    e.preventDefault()
+
+    const formData = new FormData(this)
+
+    const response = await fetch("/create-organization/",{
+        method:"POST",
+        body: formData
+    })
+
+    const data = await response.json()
+
+    if(response.ok){
+        alert("Organization created successfully")
+        location.reload()
+    }else{
+        alert(data.error)
+    }
+
+})
+</script>
+
+<script>
+function confirmLogout() {
+    window.location.href = "{% url 'logout' %}";
+}
+</script>
+
+</body>
+</html>

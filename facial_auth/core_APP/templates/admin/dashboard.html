@@ -6,14 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin | FaceAuth</title>
     <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    <style>
+        :root {
+            --sap-bg: #f5f6f7;
+            --sap-shell: #354a5f;
+            --sap-brand: #0854a0;
+            --sap-card-bg: #ffffff;
+            --sap-text: #32363a;
+            --sap-border: #d8d8d8;
+        }
+        {% if primary %}
+            :root {
+                --sap-shell: {{ primary }};
+            }
+        {% endif %}
+        {% if secondary %}
+            :root {
+                --sap-bg: {{ secondary }};
+            }
+        {% endif %}
+        {% if tertiary %}
+            :root {
+                --sap-brand: {{ tertiary }};
+            }
+        {% endif %}
+    </style>
 </head>
 <body>
-
 <header class="sap-header">
-    <div class="logo">Identity<span>Management</span></div>
+    <div class="logo"><img src="{{ organization.logo.url }}" class="logo-image">{{ organization.name }}</div>
     <nav>
         <span class="navbar-item">ButtonA</span>
-        <span class="navbar-item">ButtonB</span>
+        <span class="navbar-item" onclick="confirmLogout()">Logout</span>
     </nav>
 </header>
 
@@ -64,6 +88,12 @@
             status.style.color = "#6a6d70";
         }
     }
+</script>
+
+<script>
+function confirmLogout() {
+    window.location.href = "{% url 'logout' %}";
+}
 </script>
 
 </body>

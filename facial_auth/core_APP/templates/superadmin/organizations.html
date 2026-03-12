@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orgs. | FaceAuth</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    <link rel="stylesheet" href="{% static 'auth.css' %}" />
+</head>
+<body>
+
+<header class="sap-header">
+    <div class="logo">Welcome<span>{{ username }}</span></div>
+    <nav>
+        <a href="{% url 'superadmin_dashboard' %}"><span class="navbar-item">Add Organization</span></a>
+        <a href="{% url 'organizations_view' %}"><span class="navbar-item active">Organizations</span></a>
+        <span class="navbar-item" onclick="confirmLogout()">Logout</span>
+    </nav>
+</header>
+
+<main class="container table-page">
+    <section class="card table-card">
+        <div class="card-header">
+            <h3>Registered Organizations</h3>
+            <span class="status-pill">{{ organizations|length }} Total</span>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="sap-table">
+                <thead>
+                    <tr>
+                        <th>Logo</th>
+                        <th>Organization Name</th>
+                        <th>Theme Colors</th>
+                        <th>Created Date</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for org in organizations %}
+                    <tr>
+                        <td>
+                            {% if org.logo %}
+                                <img src="{{ org.logo.url }}" alt="logo" class="table-logo">
+                            {% else %}
+                                <div class="logo-placeholder">N/A</div>
+                            {% endif %}
+                        </td>
+                        <td class="bold-text">{{ org.name }}</td>
+                        <td>
+                            <div class="color-stack">
+                                <span class="color-dot" style="background: {{ org.primary_color }};" title="Primary"></span>
+                                <span class="color-dot" style="background: {{ org.secondary_color }};" title="Secondary"></span>
+                                <span class="color-dot" style="background: {{ org.tertiary_color }};" title="Tertiary"></span>
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ org.created_at|date:"M d, Y" }}</td>
+                        <td class="text-center">
+                            <button class="btn-secondary btn-sm" onclick="console.log('Edit {{ org.id }}')">Edit</button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="empty-state">No organizations found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+function confirmLogout() {
+    window.location.href = "{% url 'logout' %}";
+}
+</script>
+
+</body>
+</html>
