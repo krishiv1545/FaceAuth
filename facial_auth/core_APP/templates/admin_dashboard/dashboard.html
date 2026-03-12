@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identity Management | Admin</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+</head>
+<body>
+
+<header class="sap-header">
+    <div class="logo">Identity<span>Management</span></div>
+    <nav>
+        <span class="navbar-item">ButtonA</span>
+        <span class="navbar-item">ButtonB</span>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <div class="card-header">
+            <h3>Face Authentication</h3>
+            <span class="status-pill" id="status">Standby</span>
+        </div>
+        
+        <div class="viewport">
+            <video id="camera" autoplay playsinline></video>
+            <div class="scanner-overlay"></div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="startCamera()">Scan</button>
+            <button class="btn-secondary" onclick="stopCamera()">Stop</button>
+        </div>
+    </section>
+</main>
+
+<script>
+    const video = document.getElementById("camera");
+    const status = document.getElementById("status");
+
+    function startCamera() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+            status.textContent = "Live";
+            status.style.background = "#e7f4e9";
+            status.style.color = "#1e6332";
+        })
+        .catch(err => {
+            console.error("Camera access denied", err);
+            status.textContent = "Error";
+        });
+    }
+
+    function stopCamera() {
+        const stream = video.srcObject;
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+            status.textContent = "Standby";
+            status.style.background = "#f0f2f5";
+            status.style.color = "#6a6d70";
+        }
+    }
+</script>
+
+</body>
+</html>
