@@ -60,6 +60,41 @@
             <button class="btn-secondary" onclick="stopCamera()">Stop</button>
         </div>
     </section>
+
+    <section class="card" id="studentCard">
+        <div class="card-header">
+            <h3>Log Entry/Exit</h3>
+        </div>
+        
+        <div class="student-details">
+            <div class="student-id">
+
+                <div class="student-info">
+                    <h3 id="studentName"></h3>
+
+                    <div class="student-field">
+                        <span class="label">Enrollment #</span>
+                        <span id="studentEnroll"></span>
+                    </div>
+
+                    <div class="student-field">
+                        <span class="label">Email</span>
+                        <span id="studentEmail"></span>
+                    </div>
+
+                    <div class="student-field">
+                        <span class="label">Institute</span>
+                        <span id="studentInstitute">{{ organization.name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="logEntry()">Entry</button>
+            <button class="btn-primary" onclick="logExit()">Exit</button>
+        </div>
+    </section>
 </main>
 
 <script>
@@ -81,13 +116,19 @@ function startCamera() {
 
 function stopCamera() {
     const stream = video.srcObject
+
     if(stream){
         stream.getTracks().forEach(track => track.stop())
+        video.srcObject = null
     }
 
-    clearInterval(scanningInterval)
+    if(scanningInterval){
+        clearInterval(scanningInterval)
+        scanningInterval = null
+    }
 
     status.textContent = "Standby"
+    status.style.background = "#f0f2f5"
 }
 
 async function scanFrame(){
@@ -115,8 +156,15 @@ async function scanFrame(){
     const data = await response.json()
 
     if(data.match){
-        status.textContent = "Welcome " + data.username
-        status.style.background = "#e7f4e9"
+
+        stopCamera()   // stops scanning and camera
+
+        const card = document.getElementById("studentCard")
+        card.style.display = "block"
+
+        document.getElementById("studentName").textContent = data.student.full_name
+        document.getElementById("studentEnroll").textContent = data.student.enrollment
+        document.getElementById("studentEmail").textContent = data.student.email
     }
 }
 </script>

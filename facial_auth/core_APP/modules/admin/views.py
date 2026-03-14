@@ -140,22 +140,32 @@ def add_student_api(request):
 def recognize_face(request):
 
     if request.user.role != "ORG-ADMIN":
-        return JsonResponse({"error":"Unauthorized"}, status=403)
+        return JsonResponse({"error": "Unauthorized"}, status=403)
 
     if request.method != "POST":
-        return JsonResponse({"error":"POST required"}, status=400)
+        return JsonResponse({"error": "POST required"}, status=400)
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
     image_data = data.get("image")
 
     if not image_data:
-        return JsonResponse({"error":"No image"}, status=400)
+        return JsonResponse({"error": "No image"}, status=400)
 
-    header, encoded = image_data.split(",",1)
-    image_bytes = base64.b64decode(encoded)
+    try:
+        header, encoded = image_data.split(",", 1)
+        image_bytes = base64.b64decode(encoded)
+    except Exception:
+        return JsonResponse({"error": "Invalid image format"}, status=400)
 
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if img is None:
+        return JsonResponse({"error": "Image decode failed"}, status=400)
 
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -173,7 +183,10 @@ def recognize_face(request):
     )
 
     for student in students:
-        # print(f"Student Username: {student.username}")
+
+        if not student.face_encoding:
+            continue
+
         known = np.array(student.face_encoding)
 
         match = face_recognition.compare_faces(
@@ -183,9 +196,18 @@ def recognize_face(request):
         )[0]
 
         if match:
+            # Returning log
+            print(f"Matched {student.get_full_name()} ({student.username})")
+            print(f"Enrollment: {student.enrollment_no}")
             return JsonResponse({
                 "match": True,
-                "username": student.username
+                "student": {
+                    "id": student.id,
+                    "full_name": student.get_full_name() or student.username,
+                    "enrollment": getattr(student, "enrollment_no", ""),
+                    "email": student.email,
+                    "organization": student.organization.name if student.organization else "",
+                }
             })
 
     return JsonResponse({"match": False})

@@ -28,6 +28,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 2rem;
 }
 
 .sap-header {
@@ -88,6 +89,8 @@ main {
     box-shadow: 0 0 1px rgba(0,0,0,0.3), 0 10px 20px rgba(0,0,0,0.05);
     border: 1px solid var(--sap-border);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
@@ -113,6 +116,14 @@ main {
     position: relative;
     background: #000;
     height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.student-details {
+    position: relative;
+    background: ##fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -332,4 +343,42 @@ button {
 
 .toast.success {
     background: #1e6332;
+}
+
+#studentCard {
+    display: none;
+}
+
+.student-details {
+    padding: 2rem;
+}
+
+.student-id {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.student-photo img {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--sap-border);
+}
+
+.student-info h3 {
+    margin: 0 0 10px 0;
+    color: var(--sap-shell);
+}
+
+.student-field {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.student-field .label {
+    font-weight: 600;
+    margin-right: 6px;
+    color: #666;
 }
