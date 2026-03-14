@@ -91,11 +91,31 @@
         </div>
 
         <div class="controls">
-            <button class="btn-primary" onclick="logEntry()">Entry</button>
-            <button class="btn-primary" onclick="logExit()">Exit</button>
+            <button class="btn-primary" onclick="logEntry()" style="background: green; color: #fff; border: 0;">Entry</button>
+            <button class="btn-primary" onclick="logExit()" style="background: red; color: #fff; border: 0;">Exit</button>
         </div>
     </section>
 </main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+function showToast(message, type="success") {
+
+    const toast = document.getElementById("toast")
+
+    toast.textContent = message
+    toast.className = "toast show " + type
+
+    setTimeout(() => {
+        toast.className = "toast"
+    }, 3000)
+}
+</script>
+
+<script>
+let currentStudent = null;
+</script>
 
 <script>
 const video = document.getElementById("camera");
@@ -162,6 +182,8 @@ async function scanFrame(){
         const card = document.getElementById("studentCard")
         card.style.display = "block"
 
+        currentStudent = data.student
+
         document.getElementById("studentName").textContent = data.student.full_name
         document.getElementById("studentEnroll").textContent = data.student.enrollment
         document.getElementById("studentEmail").textContent = data.student.email
@@ -172,6 +194,48 @@ async function scanFrame(){
 <script>
 function confirmLogout() {
     window.location.href = "{% url 'logout' %}";
+}
+</script>
+
+<script>
+async function logEntry(){
+    await sendEvent("ENTRY")
+}
+
+async function logExit(){
+    await sendEvent("EXIT")
+}
+
+async function sendEvent(eventType){
+
+    if(!currentStudent){
+        showToast("No student detected", "error")
+        return
+    }
+
+    const response = await fetch("/api/create-event-log/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+            student_id: currentStudent.id,
+            event: eventType
+        })
+    })
+
+    const data = await response.json()
+
+    if(response.ok){
+        showToast("Event logged successfully", "success")
+
+        setTimeout(()=>{
+            window.location.href = "{% url 'admin_dashboard' %}"
+        }, 1200)
+
+    }else{
+        showToast(data.error || "Failed to log event", "error")
+    }
 }
 </script>
 

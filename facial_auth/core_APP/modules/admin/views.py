@@ -211,3 +211,47 @@ def recognize_face(request):
             })
 
     return JsonResponse({"match": False})
+
+
+@csrf_exempt
+@login_required
+def create_event_log(request):
+
+    if request.user.role != "ORG-ADMIN":
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    student_id = data.get("student_id")
+    event = data.get("event")
+
+    if event not in ["ENTRY", "EXIT"]:
+        return JsonResponse({"error": "Invalid event type"}, status=400)
+
+    try:
+        student = User.objects.get(
+            id=student_id,
+            role="STUDENT",
+            organization=request.user.organization
+        )
+    except User.DoesNotExist:
+        return JsonResponse({"error": "Student not found"}, status=404)
+
+    from core_APP.models import EventLog
+
+    log = EventLog.objects.create(
+        user=student,
+        event=event
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": "Event logged",
+        "log_id": log.id
+    })
