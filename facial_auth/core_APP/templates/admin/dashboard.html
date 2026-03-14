@@ -37,6 +37,7 @@
     <div class="logo"><img src="{{ organization.logo.url }}" class="logo-image">{{ organization.name }}</div>
     <nav>
         <a href="{% url 'admin_dashboard' %}"><span class="navbar-item active">Entry/Exit</span></a>
+        <a href="{% url 'student_activity' %}"><span class="navbar-item">Student Activity</span></a>
         <a href="{% url 'add_student' %}"><span class="navbar-item">Add Student</span></a>
         <span class="navbar-item" onclick="confirmLogout()">Logout</span>
     </nav>

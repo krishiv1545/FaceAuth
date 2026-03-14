@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | FaceAuth</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    <style>
+        .card {
+            max-width: 1000px;
+        }
+    </style>
+    <style>
+        :root {
+            --sap-bg: #f5f6f7;
+            --sap-shell: #354a5f;
+            --sap-brand: #0854a0;
+            --sap-card-bg: #ffffff;
+            --sap-text: #32363a;
+            --sap-border: #d8d8d8;
+        }
+        {% if primary %}
+            :root {
+                --sap-shell: {{ primary }};
+            }
+        {% endif %}
+        {% if secondary %}
+            :root {
+                --sap-bg: {{ secondary }};
+            }
+        {% endif %}
+        {% if tertiary %}
+            :root {
+                --sap-brand: {{ tertiary }};
+            }
+        {% endif %}
+    </style>
+</head>
+<body>
+<header class="sap-header">
+    <div class="logo"><img src="{{ organization.logo.url }}" class="logo-image">{{ organization.name }}</div>
+    <nav>
+        <a href="{% url 'admin_dashboard' %}"><span class="navbar-item">Entry/Exit</span></a>
+        <a href="{% url 'student_activity' %}"><span class="navbar-item active">Student Activity</span></a>
+        <a href="{% url 'add_student' %}"><span class="navbar-item">Add Student</span></a>
+        <span class="navbar-item" onclick="confirmLogout()">Logout</span>
+    </nav>
+</header>
+
+<main class="container">
+    <section class="card">
+        <div class="card-header">
+            <h3>Student Activity</h3>
+        </div>
+
+        <div class="table-container">
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>Enrollment Number</th>
+                        <th>Student Name</th>
+                        <th>Entry / Exit</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for log in student_activity %}
+                    <tr>
+                        <td>{{ log.user.enrollment_no }}</td>
+
+                        <td>
+                            {{ log.user.get_full_name|default:log.user.username }}
+                        </td>
+
+                        <td>
+                            {% if log.event == "ENTRY" %}
+                                <span class="event-pill entry">ENTRY</span>
+                            {% else %}
+                                <span class="event-pill exit">EXIT</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ log.timestamp|date:"g:i A (jS M., Y)" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align:center;">
+                            No activity logs yet
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+function confirmLogout() {
+    window.location.href = "{% url 'logout' %}";
+}
+</script>
+
+<script>
+function showToast(message, type="success") {
+
+    const toast = document.getElementById("toast")
+
+    toast.textContent = message
+    toast.className = "toast show " + type
+
+    setTimeout(() => {
+        toast.className = "toast"
+    }, 3000)
+}
+</script>
+
+</body>
+</html>

@@ -194,6 +194,12 @@ button {
     margin-bottom: 14px;
 }
 
+.form-group-row {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
 .form-group label {
     font-size: 0.85rem;
     margin-bottom: 4px;
@@ -381,4 +387,48 @@ button {
     font-weight: 600;
     margin-right: 6px;
     color: #666;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.activity-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.activity-table th {
+    text-align: left;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 12px;
+    border-bottom: 2px solid var(--sap-border);
+    color: #6a6d70;
+}
+
+.activity-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--sap-border);
+}
+
+.activity-table tr:hover {
+    background: #f8f9fa;
+}
+
+.event-pill {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.event-pill.entry {
+    background: #e7f4e9;
+    color: #1e6332;
+}
+
+.event-pill.exit {
+    background: #fff0f0;
+    color: #bb0000;
 }

@@ -42,6 +42,7 @@
     <div class="logo"><img src="{{ organization.logo.url }}" class="logo-image">{{ organization.name }}</div>
     <nav>
         <a href="{% url 'admin_dashboard' %}"><span class="navbar-item">Entry/Exit</span></a>
+        <a href="{% url 'student_activity' %}"><span class="navbar-item">Student Activity</span></a>
         <a href="{% url 'add_student' %}"><span class="navbar-item active">Add Student</span></a>
         <span class="navbar-item" onclick="confirmLogout()">Logout</span>
     </nav>
@@ -56,9 +57,27 @@
         <form id="addStudentForm" enctype="multipart/form-data">
         <div class="add-student-form">
             <div class="form-column">
+
+                <div class="form-group">
+                    <label>Enrollment No.</label>
+                    <input type="number" name="enrollment_no" required>
+                </div>
+
                 <div class="form-group">
                     <label>Username</label>
                     <input type="text" name="username" required>
+                </div>
+
+                <div class="form-group-row">
+                    <div class="form-group">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" required>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -87,7 +106,7 @@
                     </div>
 
                     <div class="controls">
-                        <button type="button" class="btn-secondary" onclick="captureFace()" id="captureBtn">Capture</button>
+                        <button type="button" class="btn-secondary" id="captureBtn">Capture</button>
                     </div>
                 </section>
             </div>

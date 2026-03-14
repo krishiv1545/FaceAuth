@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import admin_dashboard, add_student, biometric_capture, add_student_api, recognize_face, create_event_log
+from .views import admin_dashboard, add_student, biometric_capture, add_student_api, recognize_face, create_event_log, student_activity_view
 
 
 urlpatterns = [
@@ -9,4 +9,5 @@ urlpatterns = [
     path("api/add-student/", add_student_api),
     path("api/recognize-face/", recognize_face),
     path("api/create-event-log/", create_event_log),
+    path("student-activity/", student_activity_view, name="student_activity"),
 ]
