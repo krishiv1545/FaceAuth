@@ -51,6 +51,7 @@
         
         <div class="viewport">
             <video id="camera" autoplay playsinline></video>
+            <canvas id="snapshot" style="display:none;"></canvas>
             <div class="scanner-overlay"></div>
         </div>
 
@@ -62,33 +63,62 @@
 </main>
 
 <script>
-    const video = document.getElementById("camera");
-    const status = document.getElementById("status");
+const video = document.getElementById("camera");
+const status = document.getElementById("status");
 
-    function startCamera() {
-        navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-            status.textContent = "Live";
-            status.style.background = "#e7f4e9";
-            status.style.color = "#1e6332";
+let scanningInterval = null
+
+function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+        video.srcObject = stream
+        status.textContent = "Scanning..."
+        status.style.background = "#e7f4e9"
+
+        scanningInterval = setInterval(scanFrame, 1500)
+    })
+}
+
+function stopCamera() {
+    const stream = video.srcObject
+    if(stream){
+        stream.getTracks().forEach(track => track.stop())
+    }
+
+    clearInterval(scanningInterval)
+
+    status.textContent = "Standby"
+}
+
+async function scanFrame(){
+
+    const canvas = document.getElementById("snapshot")
+    const ctx = canvas.getContext("2d")
+
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+    const imageData = canvas.toDataURL("image/jpeg")
+
+    const response = await fetch("/api/recognize-face/",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body: JSON.stringify({
+            image: imageData
         })
-        .catch(err => {
-            console.error("Camera access denied", err);
-            status.textContent = "Error";
-        });
-    }
+    })
 
-    function stopCamera() {
-        const stream = video.srcObject;
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-            status.textContent = "Standby";
-            status.style.background = "#f0f2f5";
-            status.style.color = "#6a6d70";
-        }
+    const data = await response.json()
+
+    if(data.match){
+        status.textContent = "Welcome " + data.username
+        status.style.background = "#e7f4e9"
     }
+}
 </script>
 
 <script>

@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+# Models
+from core_APP.models import User
 # Dependencies
 import base64
 import json
@@ -113,8 +115,6 @@ def add_student_api(request):
     except Exception:
         return JsonResponse({"error": "Invalid embedding format"}, status=400)
 
-    from core_APP.models import User
-
     # prevent duplicate usernames
     if User.objects.filter(username=username).exists():
         return JsonResponse({"error": "Username already exists"}, status=400)
@@ -133,3 +133,59 @@ def add_student_api(request):
         "message": "Student created",
         "student_id": student.id
     })
+
+
+@csrf_exempt
+@login_required
+def recognize_face(request):
+
+    if request.user.role != "ORG-ADMIN":
+        return JsonResponse({"error":"Unauthorized"}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse({"error":"POST required"}, status=400)
+
+    data = json.loads(request.body)
+    image_data = data.get("image")
+
+    if not image_data:
+        return JsonResponse({"error":"No image"}, status=400)
+
+    header, encoded = image_data.split(",",1)
+    image_bytes = base64.b64decode(encoded)
+
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    faces = face_recognition.face_encodings(rgb)
+
+    if not faces:
+        return JsonResponse({"match": False})
+
+    incoming_embedding = faces[0]
+
+    students = User.objects.filter(
+        role="STUDENT",
+        organization=request.user.organization,
+        is_active=True
+    )
+
+    for student in students:
+        # print(f"Student Username: {student.username}")
+        known = np.array(student.face_encoding)
+
+        match = face_recognition.compare_faces(
+            [known],
+            incoming_embedding,
+            tolerance=0.5
+        )[0]
+
+        if match:
+            return JsonResponse({
+                "match": True,
+                "username": student.username
+            })
+
+    return JsonResponse({"match": False})
