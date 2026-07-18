@@ -123,6 +123,7 @@ const video = document.getElementById("camera");
 const status = document.getElementById("status");
 
 let scanningInterval = null
+let isBursting = false
 
 function startCamera() {
     navigator.mediaDevices.getUserMedia({ video: true })
@@ -131,7 +132,7 @@ function startCamera() {
         status.textContent = "Scanning..."
         status.style.background = "#e7f4e9"
 
-        scanningInterval = setInterval(scanFrame, 1500)
+        scanningInterval = setInterval(runBurstCheck, 2500)
     })
 }
 
@@ -152,54 +153,78 @@ function stopCamera() {
     status.style.background = "#f0f2f5"
 }
 
-async function scanFrame(){
+function captureFrame(canvas, ctx) {
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    return canvas.toDataURL("image/jpeg")
+}
+
+async function runBurstCheck(){
+
+    if(isBursting) return
+    isBursting = true
+
+    status.textContent = "Blink now..."
 
     const canvas = document.getElementById("snapshot")
     const ctx = canvas.getContext("2d")
 
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    const frames = []
+    const numFrames = 8
+    const intervalMs = 150
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    for (let i = 0; i < numFrames; i++) {
+        frames.push(captureFrame(canvas, ctx))
+        await new Promise(r => setTimeout(r, intervalMs))
+    }
 
-    const imageData = canvas.toDataURL("image/jpeg")
+    status.textContent = "Scanning..."
 
-    const response = await fetch("/api/recognize-face/",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body: JSON.stringify({
-            image: imageData
+    try {
+        const response = await fetch("/api/recognize-face/",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                images: frames
+            })
         })
-    })
 
-    const data = await response.json()
+        const data = await response.json()
 
-    if(data.match){
-
-        stopCamera()   // stops scanning and camera
-
-        const card = document.getElementById("studentCard")
-        card.style.display = "block"
-
-        currentStudent = data.student
-
-        document.getElementById("studentName").textContent = data.student.full_name
-        document.getElementById("studentEnroll").textContent = data.student.enrollment
-        document.getElementById("studentEmail").textContent = data.student.email
-
-        const entryBtn = document.getElementById("entryBtn");
-        const exitBtn = document.getElementById("exitBtn");
-
-        entryBtn.disabled = false;
-        exitBtn.disabled = false;
-
-        if (data.last_event === "ENTRY") {
-            entryBtn.disabled = true;
-        } else if (data.last_event === "EXIT") {
-            exitBtn.disabled = true;
+        if(data.liveness_failed){
+            status.textContent = "No blink detected - try again"
         }
+
+        if(data.match){
+
+            stopCamera()
+
+            const card = document.getElementById("studentCard")
+            card.style.display = "block"
+
+            currentStudent = data.student
+
+            document.getElementById("studentName").textContent = data.student.full_name
+            document.getElementById("studentEnroll").textContent = data.student.enrollment
+            document.getElementById("studentEmail").textContent = data.student.email
+
+            const entryBtn = document.getElementById("entryBtn");
+            const exitBtn = document.getElementById("exitBtn");
+
+            entryBtn.disabled = false;
+            exitBtn.disabled = false;
+
+            if (data.last_event === "ENTRY") {
+                entryBtn.disabled = true;
+            } else if (data.last_event === "EXIT") {
+                exitBtn.disabled = true;
+            }
+        }
+    } finally {
+        isBursting = false
     }
 }
 </script>

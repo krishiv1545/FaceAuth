@@ -193,6 +193,52 @@ def add_student_api(request):
     })
 
 
+def eye_aspect_ratio(eye_points):
+    eye_points = np.array(eye_points)
+    A = np.linalg.norm(eye_points[1] - eye_points[5])
+    B = np.linalg.norm(eye_points[2] - eye_points[4])
+    C = np.linalg.norm(eye_points[0] - eye_points[3])
+    if C == 0:
+        return None
+    return (A + B) / (2.0 * C)
+
+
+def get_ear_from_frame(rgb_frame):
+    landmarks_list = face_recognition.face_landmarks(rgb_frame)
+    if not landmarks_list:
+        return None
+    lm = landmarks_list[0]
+    if "left_eye" not in lm or "right_eye" not in lm:
+        return None
+    left_ear = eye_aspect_ratio(lm["left_eye"])
+    right_ear = eye_aspect_ratio(lm["right_eye"])
+    if left_ear is None or right_ear is None:
+        return None
+    return (left_ear + right_ear) / 2.0
+
+
+def has_blinked(ear_sequence, closed_thresh=0.21, open_thresh=0.25):
+    was_closed = False
+    for ear in ear_sequence:
+        if ear is None:
+            continue
+        if ear < closed_thresh:
+            was_closed = True
+        elif ear > open_thresh and was_closed:
+            return True
+    return False
+
+
+def decode_frame(image_data):
+    header, encoded = image_data.split(",", 1)
+    image_bytes = base64.b64decode(encoded)
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if img is None:
+        return None
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+
 @csrf_exempt
 @login_required
 def recognize_face(request):
@@ -208,31 +254,43 @@ def recognize_face(request):
     except Exception:
         return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    image_data = data.get("image")
+    images = data.get("images")
 
-    if not image_data:
-        return JsonResponse({"error": "No image"}, status=400)
+    # Backwards-compat: accept a single "image" too, but liveness needs a burst
+    if not images and data.get("image"):
+        images = [data.get("image")]
 
-    try:
-        header, encoded = image_data.split(",", 1)
-        image_bytes = base64.b64decode(encoded)
-    except Exception:
-        return JsonResponse({"error": "Invalid image format"}, status=400)
+    if not images or not isinstance(images, list):
+        return JsonResponse({"error": "No images"}, status=400)
 
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    rgb_frames = []
+    for image_data in images:
+        try:
+            rgb = decode_frame(image_data)
+        except Exception:
+            rgb = None
+        if rgb is not None:
+            rgb_frames.append(rgb)
 
-    if img is None:
+    if not rgb_frames:
         return JsonResponse({"error": "Image decode failed"}, status=400)
 
-    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # --- Liveness check ---
+    ear_sequence = [get_ear_from_frame(f) for f in rgb_frames]
 
-    faces = face_recognition.face_encodings(rgb)
+    if not has_blinked(ear_sequence):
+        return JsonResponse({"match": False, "liveness_failed": True})
 
-    if not faces:
+    # --- Face match: use the last frame with a detectable face+encoding ---
+    incoming_embedding = None
+    for f in reversed(rgb_frames):
+        faces = face_recognition.face_encodings(f)
+        if faces:
+            incoming_embedding = faces[0]
+            break
+
+    if incoming_embedding is None:
         return JsonResponse({"match": False})
-
-    incoming_embedding = faces[0]
 
     students = User.objects.filter(
         role="STUDENT",
@@ -254,7 +312,6 @@ def recognize_face(request):
         )[0]
 
         last_event = "ENTRY"
-        # Fetch last log
         last_event_type = (
             EventLog.objects
             .filter(user=student)
@@ -263,15 +320,9 @@ def recognize_face(request):
             .first()
         )
         if last_event_type:
-            print("EVENT LOG FOUND; last event type: ", last_event_type)
             last_event = last_event_type
-        else:
-            print("EVENT LOG NOT FOUND")
 
         if match:
-            # Returning log
-            print(f"Matched {student.get_full_name()} ({student.username})")
-            print(f"Enrollment: {student.enrollment_no}")
             return JsonResponse({
                 "match": True,
                 "student": {
