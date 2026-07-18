@@ -253,6 +253,21 @@ def recognize_face(request):
             tolerance=0.5
         )[0]
 
+        last_event = "ENTRY"
+        # Fetch last log
+        last_event_type = (
+            EventLog.objects
+            .filter(user=student)
+            .values_list("event", flat=True)
+            .order_by("-timestamp")
+            .first()
+        )
+        if last_event_type:
+            print("EVENT LOG FOUND; last event type: ", last_event_type)
+            last_event = last_event_type
+        else:
+            print("EVENT LOG NOT FOUND")
+
         if match:
             # Returning log
             print(f"Matched {student.get_full_name()} ({student.username})")
@@ -265,7 +280,8 @@ def recognize_face(request):
                     "enrollment": getattr(student, "enrollment_no", ""),
                     "email": student.email,
                     "organization": student.organization.name if student.organization else "",
-                }
+                },
+                "last_event": last_event,
             })
 
     return JsonResponse({"match": False})

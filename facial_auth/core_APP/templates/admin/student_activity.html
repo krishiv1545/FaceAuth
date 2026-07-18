@@ -58,7 +58,8 @@
             <table class="activity-table">
                 <thead>
                     <tr>
-                        <th>Enrollment Number</th>
+                        <th>Log #</th>
+                        <th>Enrollment #</th>
                         <th>Student Name</th>
                         <th>Entry / Exit</th>
                         <th>Time</th>
@@ -68,6 +69,7 @@
                 <tbody>
                     {% for log in student_activity %}
                     <tr>
+                        <td>{{ log.pk }}</td>
                         <td>{{ log.user.enrollment_no }}</td>
 
                         <td>

@@ -88,6 +88,12 @@ function showError(msg) {
     errorBox.textContent = msg;
     errorBox.style.display = "block";
 }
+
+document.getElementById("password").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        login();
+    }
+});
 </script>
 
 </body>

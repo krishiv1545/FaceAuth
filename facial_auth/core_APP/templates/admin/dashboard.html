@@ -92,8 +92,8 @@
         </div>
 
         <div class="controls">
-            <button class="btn-primary" onclick="logEntry()" style="background: green; color: #fff; border: 0;">Entry</button>
-            <button class="btn-primary" onclick="logExit()" style="background: red; color: #fff; border: 0;">Exit</button>
+            <button id="entryBtn" class="btn-primary btn-entry" onclick="logEntry()">Entry</button>
+            <button id="exitBtn" class="btn-primary btn-exit" onclick="logExit()">Exit</button>
         </div>
     </section>
 </main>
@@ -188,6 +188,18 @@ async function scanFrame(){
         document.getElementById("studentName").textContent = data.student.full_name
         document.getElementById("studentEnroll").textContent = data.student.enrollment
         document.getElementById("studentEmail").textContent = data.student.email
+
+        const entryBtn = document.getElementById("entryBtn");
+        const exitBtn = document.getElementById("exitBtn");
+
+        entryBtn.disabled = false;
+        exitBtn.disabled = false;
+
+        if (data.last_event === "ENTRY") {
+            entryBtn.disabled = true;
+        } else if (data.last_event === "EXIT") {
+            exitBtn.disabled = true;
+        }
     }
 }
 </script>

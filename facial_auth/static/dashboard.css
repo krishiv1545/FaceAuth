@@ -158,6 +158,43 @@ button {
 
 .btn-primary:hover { background: color-mix(in srgb, var(--sap-brand) 85%, black); }
 
+.btn-entry {
+    background: green;
+    border-color: green;
+    color: #fff;
+    border: 0;
+}
+
+.btn-exit {
+    background: red;
+    border-color: red;
+    color: #fff;
+    border: 0;
+}
+
+.btn-primary.disabled,
+.btn-primary:disabled {
+    background: #bdbdbd;
+    border-color: #9e9e9e;
+    color: #666;
+    cursor: not-allowed;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary.disabled::after,
+.btn-primary:disabled::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -15%;
+    width: 130%;
+    height: 2px;
+    background: rgba(80, 80, 80, 0.8);
+    transform: rotate(-20deg);
+    transform-origin: center;
+}
+
 .btn-secondary {
     background: transparent;
     color: var(--sap-brand);
@@ -391,6 +428,8 @@ button {
 
 .table-container {
     overflow-x: auto;
+    max-height: 600px;
+    scrollbar-width: thin;
 }
 
 .activity-table {
