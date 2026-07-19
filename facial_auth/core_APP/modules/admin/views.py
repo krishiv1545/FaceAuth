@@ -217,7 +217,19 @@ def get_ear_from_frame(rgb_frame):
     return (left_ear + right_ear) / 2.0
 
 
-def has_blinked(ear_sequence, closed_thresh=0.21, open_thresh=0.25):
+def has_blinked(ear_sequence, drop_ratio=0.75, recover_ratio=0.90):
+    valid = [e for e in ear_sequence if e is not None]
+    if len(valid) < 4:
+        return False
+
+    # Baseline = average of the "open eye" frames (first 2, likely eyes open)
+    baseline = np.mean(valid[:2])
+    if baseline == 0:
+        return False
+
+    closed_thresh = baseline * drop_ratio
+    open_thresh = baseline * recover_ratio
+
     was_closed = False
     for ear in ear_sequence:
         if ear is None:
